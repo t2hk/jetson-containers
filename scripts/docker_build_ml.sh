@@ -122,7 +122,7 @@ if [[ "$CONTAINERS" == "all" ]]; then
 			--build-arg BASE_IMAGE=$BASE_IMAGE \
 			--build-arg PYTORCH_IMAGE=l4t-pytorch:r$L4T_VERSION-pth1.7-py3 \
 			--build-arg TENSORFLOW_IMAGE=l4t-tensorflow:r$L4T_VERSION-tf1.15-py3 \
-			--build-arg L4T_APT_SOURCE="deb https://repo.download.nvidia.com/jetson/common r32.4 main"
+			--build-arg L4T_APT_SOURCE="deb https://repo.download.nvidia.com/jetson/common r32.5 main"
 
 			#--build-arg L4T_APT_KEY=$L4T_APT_KEY \
 			#--build-arg L4T_APT_SOURCE="$(head -1 /etc/apt/sources.list.d/nvidia-l4t-apt-source.list | sed 's/'"$L4T_APT_SERVER_PUBLIC"'/'"$L4T_APT_SERVER"'/g')"

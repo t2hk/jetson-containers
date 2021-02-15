@@ -18,7 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.4.4
+ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.5.0
 ARG PYTORCH_IMAGE
 ARG TENSORFLOW_IMAGE
 
@@ -37,12 +37,17 @@ ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
 ENV LLVM_CONFIG="/usr/bin/llvm-config-9"
 ARG MAKEFLAGS=-j6
 
-RUN printenv
+RUN printenv && \
+locale-gen ja_JP.utf8
 
+ENV LANG ja_JP.utf8
+ENV LANGUAGE ja_JP:ja
+ENV LC_ALL ja_JP.UTF-8
 
 #
 # apt packages
 #
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
           python3-pip \
@@ -60,12 +65,14 @@ RUN apt-get update && \
 		  libhdf5-dev \
 		  zlib1g-dev \
 		  zip \
+		  unzip \
 		  libjpeg8-dev \
 		  libopenmpi2 \
           openmpi-bin \
           openmpi-common \
 		  nodejs \
 		  npm \
+                  vim \
 		  protobuf-compiler \
           libprotoc-dev \
 		llvm-9 \
@@ -87,7 +94,7 @@ RUN echo "$L4T_APT_SOURCE" > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list 
     apt-get install -y --no-install-recommends \
             libopencv-dev \
 		  libopencv-python \
-    && rm /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
+                  #    && rm /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -104,14 +111,17 @@ COPY --from=pytorch /usr/local/lib/python3.6/dist-packages/ /usr/local/lib/pytho
 #
 # python pip packages
 #
-RUN pip3 install pybind11 --ignore-installed
-RUN pip3 install onnx --verbose
-RUN pip3 install scipy --verbose
-RUN pip3 install scikit-learn --verbose
-RUN pip3 install pandas --verbose
-RUN pip3 install pycuda --verbose
-RUN pip3 install numba --verbose
-
+RUN pip3 install pytorch-lightning --verbose
+RUN pip3 install --upgrade pip setuptools && \
+pip3 install pybind11 --ignore-installed && \
+pip3 install onnx --verbose && \
+pip3 install scipy --verbose && \
+pip3 install scikit-learn --verbose && \
+pip3 install pandas --verbose && \
+pip3 install pycuda --verbose && \
+pip3 install numba --verbose
+RUN pip3 install -U ginza --verbose
+#RUN pip3 install sudachipy sudachidict_core --verbose
 
 #
 # restore missing cuDNN headers
@@ -146,17 +156,16 @@ RUN git clone https://github.com/NVlabs/cub opt/cub && \
 
 #RUN pip3 install cupy --verbose
 
-
 #
 # JupyterLab
 #
 RUN pip3 install jupyter jupyterlab --verbose
 #RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager@2
 
-RUN jupyter lab --generate-config
-RUN python3 -c "from notebook.auth.security import set_password; set_password('nvidia', '/root/.jupyter/jupyter_notebook_config.json')"
+#RUN jupyter lab --generate-config
+#RUN python3 -c "from notebook.auth.security import set_password; set_password('nvidia', '/root/.jupyter/jupyter_notebook_config.json')"
 
-CMD /bin/bash -c "jupyter lab --ip 0.0.0.0 --port 8888 --allow-root &> /var/log/jupyter.log" & \
+CMD /bin/bash -c "jupyter lab --ip 0.0.0.0 --port 8888 --allow-root --NotebookApp.token='' &> /var/log/jupyter.log" & \
 	echo "allow 10 sec for JupyterLab to start @ http://localhost:8888 (password nvidia)" && \
 	echo "JupterLab logging location:  /var/log/jupyter.log  (inside the container)" && \
 	/bin/bash
